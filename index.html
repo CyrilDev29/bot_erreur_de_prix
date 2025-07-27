@@ -1,0 +1,52 @@
+<!-- index.html -->
+<!DOCTYPE html>
+<html lang="fr">
+<link rel="stylesheet" href="style.css">
+<head>
+    <meta charset="UTF-8">
+    <title>Ajout de produits Amazon</title>
+</head>
+<body>
+<h1>Ajouter un produit à surveiller</h1>
+
+<form id="product-form">
+    <label>
+        Nom du produit :
+        <input type="text" id="nom" required>
+    </label><br><br>
+
+    <label>
+        URL Amazon :
+        <input type="url" id="url" required>
+    </label><br><br>
+
+    <label>
+        Prix seuil (€) :
+        <input type="number" step="0.01" id="seuil" required>
+    </label><br><br>
+
+    <button type="submit">Ajouter</button>
+</form>
+
+<p id="resultat"></p>
+
+<script>
+    document.getElementById('product-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const nom = document.getElementById('nom').value;
+        const url = document.getElementById('url').value;
+        const seuil = document.getElementById('seuil').value;
+
+        const res = await fetch('/ajouter', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ nom, url, seuil })
+        });
+
+        const msg = await res.text();
+        document.getElementById('resultat').textContent = msg;
+    });
+</script>
+</body>
+</html>
