@@ -31,7 +31,12 @@ async function delay(ms) {
 
 // Fonction principale
 async function checkPrice(product) {
-    const browser = await puppeteer.launch({ headless: true });
+    const browser = await puppeteer.launch({
+        headless: true,
+        executablePath: '/usr/bin/chromium-browser', // 🔧 ← forcer le chemin système de Chromium
+        args: ['--no-sandbox', '--disable-setuid-sandbox']
+    });
+
     const page = await browser.newPage();
 
     await page.setUserAgent(
@@ -61,13 +66,11 @@ async function checkPrice(product) {
             return null;
         });
 
-        // Valeurs utilisées
         const prixHabituel = product.prixHabituel || currentPrice;
         const seuil = product.seuil || prixHabituel * 0.5;
 
         const message = `🔍 ${product.nom}\n💰 Prix actuel : ${currentPrice.toFixed(2)}€\n💸 Prix habituel : ${prixHabituel.toFixed(2)}€\n📉 Seuil d'erreur : ${seuil.toFixed(2)}€`;
 
-        // Vérifie si le prix est inférieur ou égal à 50% du prix habituel
         if (currentPrice <= prixHabituel * 0.5) {
             const channel = client.channels.cache.get(DISCORD_CHANNEL_ID);
             if (channel) await channel.send(`🚨 Erreur de prix détectée !\n${message}\n🔗 ${product.url}`);
