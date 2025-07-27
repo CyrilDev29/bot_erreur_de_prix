@@ -19,24 +19,22 @@ const client = new Client({
 const EXPORT_FOLDER = path.join(__dirname, 'exports');
 if (!fs.existsSync(EXPORT_FOLDER)) fs.mkdirSync(EXPORT_FOLDER);
 
-// Backup
+// Sauvegarde de sécurité
 const backupName = `products-backup-${new Date().toISOString().split('T')[0]}.json`;
 fs.writeFileSync(path.join(EXPORT_FOLDER, backupName), JSON.stringify(products, null, 2));
 console.log(`📝 Fichier exports/${backupName} sauvegardé.`);
 
-// Fonction pause
+// Pause
 async function delay(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-// Fonction principale
+// Vérification d’un produit
 async function checkPrice(product) {
     const browser = await puppeteer.launch({
         headless: true,
-        executablePath: '/usr/bin/chromium-browser', // 🔧 ← forcer le chemin système de Chromium
-        args: ['--no-sandbox', '--disable-setuid-sandbox']
+        args: ['--no-sandbox'] // ✅ Ajouté pour éviter les erreurs sur serveur root
     });
-
     const page = await browser.newPage();
 
     await page.setUserAgent(
@@ -66,6 +64,12 @@ async function checkPrice(product) {
             return null;
         });
 
+        if (currentPrice === null) {
+            console.warn(`⚠️ Prix introuvable pour ${product.nom} (${product.url})`);
+            await browser.close();
+            return;
+        }
+
         const prixHabituel = product.prixHabituel || currentPrice;
         const seuil = product.seuil || prixHabituel * 0.5;
 
@@ -86,12 +90,12 @@ async function checkPrice(product) {
     }
 }
 
-// Lancer boucle de vérification
+// Lancement
 client.once('ready', async () => {
     console.log("✅ Bot prêt. Vérifications en cours...");
     for (let product of products) {
         await checkPrice(product);
-        await delay(5000); // Pause 5s entre chaque produit
+        await delay(5000);
     }
 });
 
